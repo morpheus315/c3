@@ -34,7 +34,7 @@ namespace lanp2p
 			void startUdpListen();
 			void stopUdpListen();
 
-// Callbacks
+//»Øµ÷
 			void setOnPeerDiscovered(const std::function<void(const PeerInfo&)>& cb);
 			void setOnMatchRequest(const std::function<void(const PeerInfo&, const std::string& matchId)>& cb);
 			void setOnMatchResponse(const std::function<void(const PeerInfo&, bool accepted, const std::string& matchId)>& cb);
