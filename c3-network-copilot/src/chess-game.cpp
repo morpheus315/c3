@@ -8,11 +8,14 @@
 #include "../include/chess-game.h"
 //棋盘位置逻辑：右手系xyz，先沿x再沿y再沿z，比如BoardSize=5，那*(ChessBoard+17)对应的棋子位置就是（2，4，1），计算公式：17=（2-1）+（4-1）* 5 +（1-1）* 25
 using namespace std;
+
+
 //根据坐标输出棋子存储位置
 int place(int x, int y, int z, int BoardSize)
 {
 	return (x - 1) + (y - 1) * BoardSize + (z - 1) * BoardSize * BoardSize;
 }
+
 
 //单机游戏获取棋盘大小及分配内存
 int NativeGetChessSize(int* pBoardSize,char** pChessBoard)
@@ -54,13 +57,8 @@ int NativeGetChessSize(int* pBoardSize,char** pChessBoard)
 	}
 	return 1;
 }
-//联机游戏获取棋盘大小及分配内存（待实现）
-int OnlineGetChessSize(int BoardSize, char* ChessBoard)
-{
-	return 1;
-}
 
-//单机游戏获取棋子位置
+//输入棋子位置
 void NativeGetChessPosition(int input[])
 {
 	cout << "Enter the location where you want to place your order. Use the form like x y z." << endl;
@@ -76,35 +74,8 @@ void NativeGetChessPosition(int input[])
 		break;
 	}
 }
-//联机游戏获取棋子位置（待实现）
-void OnlineGetChessPosition(int input[])
-{
 
-}
 
-//检查输入位置是否在范围内/没有棋子，均是则放置棋子并返回1，否则返回0
-int CheckLegal(int BoardSize, char* ChessBoard, int input[],char player)
-{
-	if (input[0]<1 || input[0]>BoardSize || input[1]<1 || input[1]>BoardSize || input[2]<1 || input[2]>BoardSize)
-	{
-		cout << "Out of the range!" << endl;
-		return 0;
-	}
-	else
-	{
-		int NewChess = (input[0] - 1) + (input[1] - 1) * BoardSize + (input[2] - 1) * BoardSize * BoardSize;
-		if (ChessBoard[NewChess] != 0)
-		{
-			cout << "There is already a chess piece in this position!" << endl;
-			return 0;
-		}
-		else
-		{
-			ChessBoard[NewChess] = player;
-		}
-	}
-	return 1;
-}
 
 //新函数：接受棋局描述，检查位置合法性，如果合法则更新棋局，否则输出非法标记
 bool UpdateBoardState(int BoardSize, char* ChessBoard, int input[], char player)
@@ -311,14 +282,7 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	}
 	return 0;
 }
-
-//显示3D模型（待实现，不过这功能明显不应该在控制台窗口程序写就是了）
-int Display3DModel(int BoardSize, char* ChessBoard)
-{
-	//错误返回0
-
-	return 1;
-}
+/*
 //单机游戏主程序
 int NativeChessPlaying(int BoardSize, char* ChessBoard)
 {
@@ -326,7 +290,6 @@ int NativeChessPlaying(int BoardSize, char* ChessBoard)
 	{
 		return 0;
 	}
-	Display3DModel(BoardSize, ChessBoard);
 	char player1 = '1', player2 = '2';
 	int input1[3] = { 0 }, input2[3] = { 0 };
 	while (TRUE)
@@ -355,13 +318,8 @@ int NativeChessPlaying(int BoardSize, char* ChessBoard)
 	system("pause");
 	free(ChessBoard);
 	return 1;
-}
-//联机游戏主程序（待实现）
-int OnlineChessPlaying(int BoardSize, char* ChessBoard)
-{
-	return 0;
-}
-
+}*/
+/*
 int main()
 {
 	while (TRUE)
@@ -396,4 +354,4 @@ int main()
 		}
 	}
 	return 0;
-}
+}*/
