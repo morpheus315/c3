@@ -39,11 +39,14 @@ namespace lanp2p
 			void setOnMatchRequest(const std::function<void(const PeerInfo&, const std::string& matchId)>& cb);
 			void setOnMatchResponse(const std::function<void(const PeerInfo&, bool accepted, const std::string& matchId)>& cb);
 			void setOnMatchInterrupted(const std::function<void(const PeerInfo&, const std::string& matchId)>& cb);
+			void setOnGameMove(const std::function<void(const PeerInfo&, int x, int y, int z)>& cb);
 
 //用户行为
 			bool sendMatchRequest(const std::string& peerIp, uint16_t peerTcpPort, const std::string& matchId);
 			bool respondToMatch(const std::string& peerIp, uint16_t peerTcpPort, const std::string& matchId, bool accept);
 			bool interruptMatch(const std::string& peerIp, uint16_t peerTcpPort, const std::string& matchId);
+
+			bool sendGameMove(const std::string& peerIp, uint16_t peerTcpPort, int x, int y, int z);
 
 			std::vector<PeerInfo> getPeersSnapshot();
 
@@ -127,11 +130,12 @@ namespace lanp2p
 			std::atomic<bool> _maintenanceActive{false};
 			std::thread _maintenanceThread;
 
-// Callbacks
+//回调
 			std::function<void(const PeerInfo&)> _onPeerDiscovered;
 			std::function<void(const PeerInfo&, const std::string&)> _onMatchRequest;
 			std::function<void(const PeerInfo&, bool, const std::string&)> _onMatchResponse;
 			std::function<void(const PeerInfo&, const std::string&)> _onMatchInterrupted;
+			std::function<void(const PeerInfo&, int x, int y,int z)> _onGameMove;
 
 //检测用户相关
 			std::mutex _peersMutex;

@@ -165,6 +165,10 @@ namespace lanp2p
 	{
 		_onMatchInterrupted = cb;
 	}
+	void LanP2PNode::setOnGameMove(const std::function<void(const PeerInfo&, int x, int y, int z)>& cb)//设置收到游戏移动时调用的函数
+	{
+		_onGameMove = cb;
+	}
 
 	std::vector<PeerInfo> LanP2PNode::getPeersSnapshot()//获取当前在线玩家列表
 	{
@@ -334,6 +338,26 @@ namespace lanp2p
 			}
 		}
 		closesock(s);
+	}
+
+	bool LanP2PNode::sendGameMove(const std::string& peerIp, uint16_t peerTcpPort, int x, int y, int z)
+	{
+		uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+		if ((SOCKET)s == INVALID_SOCKET) return false;
+		sockaddr_in addr{};
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons(peerTcpPort);
+		addr.sin_addr.s_addr = inet_addr(peerIp.c_str());
+		if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) !=0)
+		{
+			closesock(s);
+			return false;
+		}
+		std::ostringstream oss;
+		oss << "MOVE|" << x << "|" << y << "|" << z << "|";
+		bool res = tcpSendFramed(s, oss.str());
+		closesock(s);
+		return res;
 	}
 
 	void LanP2PNode::tcpListenLoop()//tcp监听循环
@@ -564,6 +588,46 @@ namespace lanp2p
 						}
 					}
 				}
+			}
+			else if (payload.compare(0, 5, "MOVE|"))
+			{
+				size_t p1 = payload.find('|', 5);
+				size_t p2 = (p1 != std::string::npos) ? payload.find('|', p1 + 1) : std::string::npos;
+				size_t p3 = (p2 != std::string::npos) ? payload.find('|', p2 + 1) : std::string::npos;
+				if (p1 != std::string::npos && p2 != std::string::npos && p3 != std::string::npos)
+				{
+					try
+					{
+						int x = std::stoi(payload.substr(5, p1-5));
+						int y = std::stoi(payload.substr(p1 + 1, p2 - (p1 + 1)));
+						int z = std::stoi(payload.substr(p2 + 1, p3 - (p2 + 1)));
+
+						PeerInfo pi;
+						pi.ip = remoteIp;
+						pi.lastSeenMs = ts;
+						{
+							std::lock_guard<std::mutex> lk(_peersMutex);
+							for (auto& kv : _peersByKey)
+							{
+								const PeerInfo& p = kv.second;
+								if (p.ip == remoteIp)
+								{
+									pi = p;
+									break;
+								}
+							}
+						}
+						if (_onGameMove)
+						{
+							_onGameMove(pi, x, y, z);
+						}
+					}
+					catch (...)
+					{
+						//stoi转换失败
+					}
+				}
+					
 			}
 		}
 		closesock(sock);

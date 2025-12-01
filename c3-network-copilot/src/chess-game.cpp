@@ -16,46 +16,16 @@ int place(int x, int y, int z, int BoardSize)
 	return (x - 1) + (y - 1) * BoardSize + (z - 1) * BoardSize * BoardSize;
 }
 
-
-//单机游戏获取棋盘大小及分配内存
-int NativeGetChessSize(int* pBoardSize,char** pChessBoard)
+bool OnlineInitChessBoard(char** pChessBoard, int BoardSize)
 {
-	while (TRUE)
+	size_t n = (size_t)BoardSize * (size_t)BoardSize * (size_t)BoardSize;
+	*pChessBoard = (char*)calloc(n, sizeof(char));
+	if (*pChessBoard == NULL)
 	{
-		bool choice2 = 1;
-		cout << "How much the size do you want?(from 10 to 30)";
-		if (!(cin >> *pBoardSize))
-		{
-			cin.clear();
-			cin.ignore(numeric_limits<streamsize>::max(), '\n');
-			cout << "Please input a number!" << endl;
-			continue;
-		}
-		if (*pBoardSize < 10 || *pBoardSize > 30)
-		{
-			cout << "The number is out of the limits!" << endl;
-			continue;
-		}
-		size_t n = (size_t)*pBoardSize * (size_t)*pBoardSize * (size_t)*pBoardSize;
-		*pChessBoard = (char*)calloc(n, sizeof(char));
-		if (*pChessBoard == NULL)
-		{
-			cout << "ERROR allocating! Input 1 to try again, 0 to exit:";
-			while (!(cin >> choice2))
-			{
-				cin.clear();
-				cin.ignore(numeric_limits<streamsize>::max(), '\n');
-				cout << "Input 1 to try again, 0 to exit:";
-			}
-			if (!choice2)
-			{
-				cout << "See you next time!" << endl;
-				return 0;
-			}
-		}
-		break;
+		cout << "ERROR allocating online chess board!" << endl;
+		return false;
 	}
-	return 1;
+	return true;
 }
 
 //输入棋子位置
