@@ -746,6 +746,17 @@ namespace lanp2p
 		return std::string(buf);
 	}
 
+	std::string LanP2PNode::generateMatchId()
+	{
+		std::random_device rd;
+		std::mt19937_64 rng(rd());
+		std::uniform_int_distribution<uint64_t> dist;
+		uint64_t v = dist(rng);
+		char buf[17];
+		std::snprintf(buf, sizeof(buf), "%016llx", (unsigned long long)v);
+		return std::string(buf);
+	}
+
 	void LanP2PNode::peersMaintenanceLoop()
 	{
 // Periodically prune stale peers and manage match heartbeats

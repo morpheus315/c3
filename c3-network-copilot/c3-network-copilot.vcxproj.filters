@@ -21,6 +21,9 @@
     <ClInclude Include="include\chess-game.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\GameClient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\LanP2PNode.cpp">
@@ -29,10 +32,10 @@
     <ClCompile Include="src\main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\chess-main.cpp">
+    <ClCompile Include="src\chess-game.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\chess-game.cpp">
+    <ClCompile Include="src\GameClient.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

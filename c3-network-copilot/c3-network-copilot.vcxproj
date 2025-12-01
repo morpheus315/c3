@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -124,11 +124,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\chess-game.h" />
+    <ClInclude Include="include\GameClient.h" />
     <ClInclude Include="include\LanP2PNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\chess-game.cpp" />
-    <ClCompile Include="src\chess-main.cpp" />
+    <ClCompile Include="src\GameClient.cpp" />
     <ClCompile Include="src\LanP2PNode.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>

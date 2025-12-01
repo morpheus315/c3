@@ -87,6 +87,9 @@ namespace lanp2p
 				_matchHeartbeatTimeoutMs = ms;
 			}
 
+			// Static utility function to generate a random match ID
+			static std::string generateMatchId();
+
 		private:
 			void udpBroadcastLoop();
 			void udpListenLoop();

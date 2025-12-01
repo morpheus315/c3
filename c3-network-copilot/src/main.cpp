@@ -1,3 +1,4 @@
+#include "../include/GameClient.h"
 #include <iostream>
 #include <atomic>
 #include <chrono>
@@ -26,17 +27,6 @@ struct MatchState
 	std::string matchId;
 	lanp2p::PeerInfo peer; // opponent
 };
-
-static std::string genMatchId()
-{
-	std::random_device rd;
-	std::mt19937_64 rng(rd());
-	std::uniform_int_distribution<uint64_t> dist;
-	uint64_t v = dist(rng);
-	char buf[17];
-	std::snprintf(buf, sizeof(buf), "%016llx", (unsigned long long)v);
-	return std::string(buf);
-}
 
 static void printMenu()
 {
@@ -266,7 +256,7 @@ int main()
 					std::cout << "Invalid choice." << std::endl;
 					break;
 				}
-				std::string mid = genMatchId();
+				std::string mid = LanP2PNode::generateMatchId();
 				auto& peer = peers[(size_t)idx-1];
 				std::cout << "[DBG] Sending REQ: to " << peer.ip << ":" << peer.tcpPort
 				          << ", matchId=" << mid << ", fromId=" << node.getNodeId() << std::endl;
