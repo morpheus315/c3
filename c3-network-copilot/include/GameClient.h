@@ -65,6 +65,7 @@ private:
 	bool _myTurn{ false };
 	char _myPlayer{ '1' };
 	std::atomic<bool> _gameRunning{ false };
+	bool _iAmMatchInitiator{ false };  // Track if I initiated the match
 
 	std::mutex _moveMutex;
 	bool _opponentMoved{ false };

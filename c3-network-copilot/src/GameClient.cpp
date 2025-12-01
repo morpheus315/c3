@@ -84,6 +84,8 @@ bool Client::requestMatch(const lanp2p::PeerInfo& peer)
                   << (peer.name.empty() ? peer.id : peer.name)
                   << " with matchId=" << mid
                   << ". Waiting for response..." << std::endl;
+        
+        // Don't set _iAmMatchInitiator here - wait for response
         return true;
     }
     else
@@ -132,6 +134,7 @@ void Client::handlePendingRequests()
             _match.inMatch = true;
             _match.peer = pr.peer;
             _match.matchId = pr.matchId;
+            _iAmMatchInitiator = false;  // Mark as match responder
             std::cout << "Accepted. Match started." << std::endl;
         }
         else
@@ -250,6 +253,7 @@ void Client::onMatchResponse(const lanp2p::PeerInfo& p, bool accepted, const std
         _match.inMatch = true;
         _match.peer = p;
         _match.matchId = matchId;
+        _iAmMatchInitiator = true;  // Mark as match initiator only when accepted
     }
 }
 
@@ -339,18 +343,38 @@ void Client::initGameState()
         return;
     }
     
-    lanp2p::PeerInfo opponent;
+    std::string matchId;
     {
         std::lock_guard<std::mutex> lk(_matchMutex);
-        opponent = _match.peer;
+        matchId = _match.matchId;
     }
     
-    _myPlayer = (_node.getNodeId() < opponent.id) ? '1' : '2';
+    // Determine if matchId first character is odd
+    bool matchIdIsOdd = false;
+    if (!matchId.empty())
+    {
+        char firstChar = matchId[0];
+        if (firstChar >= '0' && firstChar <= '9')
+            matchIdIsOdd = ((firstChar - '0') % 2 == 1);
+        else if (firstChar >= 'a' && firstChar <= 'f')
+            matchIdIsOdd = ((firstChar - 'a') % 2 == 1);
+        else if (firstChar >= 'A' && firstChar <= 'F')
+            matchIdIsOdd = ((firstChar - 'A') % 2 == 1);
+    }
+    
+    // Determine who goes first based on initiator status and matchId parity
+    // Initiator + odd = first player, Initiator + even = second player
+    // Responder + odd = second player, Responder + even = first player
+    bool iAmFirstPlayer = (_iAmMatchInitiator && matchIdIsOdd) || (!_iAmMatchInitiator && !matchIdIsOdd);
+    
+    _myPlayer = iAmFirstPlayer ? '1' : '2';
     _myTurn = (_myPlayer == '1');
     _gameRunning = true;
     _opponentMoved = false;
 
-    std::cout << "Board initialized. You are Player " << _myPlayer << "." << std::endl;
+    std::cout << "Board initialized. You are Player " << _myPlayer 
+              << " (" << (_iAmMatchInitiator ? "Initiator" : "Responder") 
+              << ", matchId: " << matchId.substr(0, 4) << "...)." << std::endl;
     if (_myTurn) {
         std::cout << "It's your turn." << std::endl;
     } else {
