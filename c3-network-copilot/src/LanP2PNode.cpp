@@ -204,7 +204,7 @@ namespace lanp2p
 	void LanP2PNode::udpBroadcastLoop()//udp¹ã²¥Ñ­»·
 	{
 		uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-		if ((int)s <0)
+		if ((SOCKET)s == INVALID_SOCKET)
 			return;
 		setReuse(s);
 		setBroadcast(s);
@@ -231,8 +231,8 @@ namespace lanp2p
 				len = std::snprintf(buf, sizeof(buf), "DISC|%s|%u", _nodeId.c_str(), (unsigned)_tcpPort);
 			else
 				len = std::snprintf(buf, sizeof(buf), "DISC|%s|%u|%s", _nodeId.c_str(), (unsigned)_tcpPort, _nodeName.c_str());
-			sendto((int)s, buf, len,0, (sockaddr*)&addrBC, sizeof(addrBC));
-			sendto((int)s, buf, len,0, (sockaddr*)&addrLoop, sizeof(addrLoop));
+			sendto(static_cast<SOCKET>(s), buf, len,0, (sockaddr*)&addrBC, sizeof(addrBC));
+			sendto(static_cast<SOCKET>(s), buf, len,0, (sockaddr*)&addrLoop, sizeof(addrLoop));
 			std::this_thread::sleep_for(std::chrono::milliseconds(200));
 		}
 		while (_running && _broadcastActive)
@@ -243,8 +243,8 @@ namespace lanp2p
 				len = std::snprintf(buf, sizeof(buf), "DISC|%s|%u", _nodeId.c_str(), (unsigned)_tcpPort);
 			else
 				len = std::snprintf(buf, sizeof(buf), "DISC|%s|%u|%s", _nodeId.c_str(), (unsigned)_tcpPort, _nodeName.c_str());
-			sendto((int)s, buf, len,0, (sockaddr*)&addrBC, sizeof(addrBC));
-			sendto((int)s, buf, len,0, (sockaddr*)&addrLoop, sizeof(addrLoop));
+			sendto(static_cast<SOCKET>(s), buf, len,0, (sockaddr*)&addrBC, sizeof(addrBC));
+			sendto(static_cast<SOCKET>(s), buf, len,0, (sockaddr*)&addrLoop, sizeof(addrLoop));
 			for (int i =0; i <10 && _running && _broadcastActive; i++)
 				std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		}
@@ -589,7 +589,7 @@ namespace lanp2p
 					}
 				}
 			}
-			else if (payload.compare(0, 5, "MOVE|"))
+			else if (payload.compare(0, 5, "MOVE|") == 0)
 			{
 				size_t p1 = payload.find('|', 5);
 				size_t p2 = (p1 != std::string::npos) ? payload.find('|', p1 + 1) : std::string::npos;

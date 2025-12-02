@@ -20,6 +20,13 @@ Client::Client(lanp2p::LanP2PNode& node)
 // Destructor: Clean up resources
 Client::~Client()
 {
+    // Clear all callbacks early to prevent dangling pointer access
+    _node.setOnPeerDiscovered(nullptr);
+    _node.setOnMatchRequest(nullptr);
+    _node.setOnMatchResponse(nullptr);
+    _node.setOnMatchInterrupted(nullptr);
+    _node.setOnGameMove(nullptr);
+
     // Stop game loop first if running
     _gameRunning = false;
     
@@ -39,13 +46,6 @@ Client::~Client()
     
     // Clean up game state
     cleanupGameState();
-    
-    // Clear all callbacks to prevent dangling pointer access
-    _node.setOnPeerDiscovered(nullptr);
-    _node.setOnMatchRequest(nullptr);
-    _node.setOnMatchResponse(nullptr);
-    _node.setOnMatchInterrupted(nullptr);
-    _node.setOnGameMove(nullptr);
 }
 
 // --- Public Methods ---
