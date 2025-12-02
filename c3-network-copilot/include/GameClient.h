@@ -42,7 +42,7 @@ class Client
 			lanp2p::PeerInfo peer;
 		};
 		MatchState _match;
-		mutable std::mutex _matchMutex; // Protects _match access
+		mutable std::mutex _matchMutex;
 
 		struct PendingRequest
 		{
@@ -65,7 +65,7 @@ class Client
 		bool _myTurn{ false };
 		char _myPlayer{ '1' };
 		std::atomic<bool> _gameRunning{ false };
-		bool _iAmMatchInitiator{ false };  // Track if I initiated the match
+		bool _iAmMatchInitiator{ false };
 
 		std::mutex _moveMutex;
 		bool _opponentMoved{ false };

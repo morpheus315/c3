@@ -51,7 +51,7 @@ Client::~Client()
 	// 结束超时线程
 	stopTimeoutThread();
 
-	// 清空比赛状态（节点已停止，发送中断无意义，直接重置）
+	// 清空比赛状态
 	{
 		std::lock_guard<std::mutex> lk(_matchMutex);
 		_match = MatchState{};
@@ -61,7 +61,6 @@ Client::~Client()
 	cleanupGameState();
 }
 
-// --- 公有方法 ---
 
 void Client::startDiscovery()
 {
