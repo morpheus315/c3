@@ -67,7 +67,7 @@ namespace lanp2p
 	{
 		if (!_running.exchange(true))
 		{
-//首次进入运行状态的代码
+		//首次进入运行状态的代码
 		}
 		if (!_broadcastActive.exchange(true))
 		{
@@ -342,22 +342,27 @@ namespace lanp2p
 
 	bool LanP2PNode::sendGameMove(const std::string& peerIp, uint16_t peerTcpPort, int x, int y, int z)
 	{
-		uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if ((SOCKET)s == INVALID_SOCKET) return false;
-		sockaddr_in addr{};
-		addr.sin_family = AF_INET;
-		addr.sin_port = htons(peerTcpPort);
-		addr.sin_addr.s_addr = inet_addr(peerIp.c_str());
-		if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) !=0)
+		for (int attempt = 0; attempt < _maxSendRetries; ++attempt)
 		{
+			uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+			if ((SOCKET)s == INVALID_SOCKET) return false;
+			sockaddr_in addr{};
+			addr.sin_family = AF_INET;
+			addr.sin_port = htons(peerTcpPort);
+			addr.sin_addr.s_addr = inet_addr(peerIp.c_str());
+			if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) != 0)
+			{
+				closesock(s);
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
+				continue;
+			}
+			std::ostringstream oss; oss << "MOVE|" << x << "|" << y << "|" << z << "|";
+			bool ok = tcpSendFramed(s, oss.str());
 			closesock(s);
-			return false;
+			if (ok) return true;
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		}
-		std::ostringstream oss;
-		oss << "MOVE|" << x << "|" << y << "|" << z << "|";
-		bool res = tcpSendFramed(s, oss.str());
-		closesock(s);
-		return res;
+		return false;
 	}
 
 	void LanP2PNode::tcpListenLoop()//tcp监听循环
@@ -659,74 +664,112 @@ namespace lanp2p
 
 	bool LanP2PNode::sendMatchRequest(const std::string& peerIp, uint16_t peerTcpPort, const std::string& matchId)
 	{
-		uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if ((SOCKET)s == INVALID_SOCKET) return false;
-		sockaddr_in addr{}; addr.sin_family = AF_INET; addr.sin_port = htons(peerTcpPort); addr.sin_addr.s_addr = inet_addr(peerIp.c_str());
-		if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) !=0) { closesock(s); return false; }
-// Try to find target id by ip:port to disambiguate multi-instance on same host
-		std::string toId;
+		for (int attempt = 0; attempt < _maxSendRetries; ++attempt)
 		{
-			std::lock_guard<std::mutex> lk(_peersMutex);
-			for (auto& kv : _peersByKey)
+			uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+			if ((SOCKET)s == INVALID_SOCKET) return false;
+			sockaddr_in addr{}; addr.sin_family = AF_INET; addr.sin_port = htons(peerTcpPort); addr.sin_addr.s_addr = inet_addr(peerIp.c_str());
+			if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) != 0)
 			{
-				const PeerInfo& p = kv.second;
-				if (p.ip == peerIp && p.tcpPort == peerTcpPort)
+				closesock(s);
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				continue;
+			}
+			std::string toId;
+			{
+				std::lock_guard<std::mutex> lk(_peersMutex);
+				for (auto& kv : _peersByKey)
 				{
-					toId = p.id;
-					break;
+					const PeerInfo& p = kv.second;
+					if (p.ip == peerIp && p.tcpPort == peerTcpPort)
+					{
+						toId = p.id;
+						break;
+					}
 				}
 			}
+			std::ostringstream oss;
+			if (toId.empty())
+				oss << "REQ|" << _nodeId << "|" << _tcpPort << "|" << matchId << "|";
+			else
+				oss << "REQ|" << _nodeId << "|" << _tcpPort << "|" << matchId << "|" << toId << "|";
+			bool ok = tcpSendFramed(s, oss.str());
+			closesock(s);
+			if (ok)
+			{
+				if (!toId.empty())
+					markMatchActive(peerIp, peerTcpPort, toId, matchId);
+				return true;
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
-		std::ostringstream oss;
-		if (toId.empty())
-			oss << "REQ|" << _nodeId << "|" << _tcpPort << "|" << matchId << "|";
-		else
-			oss << "REQ|" << _nodeId << "|" << _tcpPort << "|" << matchId << "|" << toId << "|";
-		bool ok = tcpSendFramed(s, oss.str());
-		closesock(s);
-// mark match active if we know peerId
-		if (!toId.empty() && ok)
-			markMatchActive(peerIp, peerTcpPort, toId, matchId);
-		return ok;
+		return false;
 	}
 
 	bool LanP2PNode::respondToMatch(const std::string& peerIp, uint16_t peerTcpPort, const std::string& matchId, bool accept)
 	{
-		uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if ((SOCKET)s == INVALID_SOCKET) return false;
-		sockaddr_in addr{}; addr.sin_family = AF_INET; addr.sin_port = htons(peerTcpPort); addr.sin_addr.s_addr = inet_addr(peerIp.c_str());
-		if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) !=0) { closesock(s); return false; }
-		std::ostringstream oss;
-		oss << "RESP|" << _nodeId << "|" << matchId << "|" << (accept ? "1" : "0") << "|";
-		bool ok = tcpSendFramed(s, oss.str());
-		closesock(s);
-		return ok;
+		for (int attempt = 0; attempt < _maxSendRetries; ++attempt)
+		{
+			uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+			if ((SOCKET)s == INVALID_SOCKET) return false;
+			sockaddr_in addr{}; addr.sin_family = AF_INET; addr.sin_port = htons(peerTcpPort); addr.sin_addr.s_addr = inet_addr(peerIp.c_str());
+			if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) != 0)
+			{
+				closesock(s);
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				continue;
+			}
+			std::ostringstream oss; oss << "RESP|" << _nodeId << "|" << matchId << "|" << (accept ? "1" : "0") << "|";
+			bool ok = tcpSendFramed(s, oss.str());
+			closesock(s);
+			if (ok) return true;
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+		return false;
 	}
 
 	bool LanP2PNode::interruptMatch(const std::string& peerIp, uint16_t peerTcpPort, const std::string& matchId)
 	{
-		uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if ((SOCKET)s == INVALID_SOCKET) return false;
-		sockaddr_in addr{}; addr.sin_family = AF_INET; addr.sin_port = htons(peerTcpPort); addr.sin_addr.s_addr = inet_addr(peerIp.c_str());
-		if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) !=0) { closesock(s); return false; }
-		std::ostringstream oss;
-		oss << "INT|" << _nodeId << "|" << matchId << "|";
-		bool ok = tcpSendFramed(s, oss.str());
-		closesock(s);
-		return ok;
+		for (int attempt = 0; attempt < _maxSendRetries; ++attempt)
+		{
+			uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+			if ((SOCKET)s == INVALID_SOCKET) return false;
+			sockaddr_in addr{}; addr.sin_family = AF_INET; addr.sin_port = htons(peerTcpPort); addr.sin_addr.s_addr = inet_addr(peerIp.c_str());
+			if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) != 0)
+			{
+				closesock(s);
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				continue;
+			}
+			std::ostringstream oss; oss << "INT|" << _nodeId << "|" << matchId << "|";
+			bool ok = tcpSendFramed(s, oss.str());
+			closesock(s);
+			if (ok) return true;
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+		return false;
 	}
 
 	bool LanP2PNode::sendTcpHeartbeat(const std::string& ip, uint16_t port, const std::string& matchId)
 	{
-		uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-		if ((SOCKET)s == INVALID_SOCKET) return false;
-		sockaddr_in addr{}; addr.sin_family = AF_INET; addr.sin_port = htons(port); addr.sin_addr.s_addr = inet_addr(ip.c_str());
-		if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) !=0) { closesock(s); return false; }
-		std::ostringstream oss;
-		oss << "HB|" << _nodeId << "|" << matchId << "|";
-		bool ok = tcpSendFramed(s, oss.str());
-		closesock(s);
-		return ok;
+		for (int attempt = 0; attempt < _maxSendRetries; ++attempt)
+		{
+			uintptr_t s = (uintptr_t)socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+			if ((SOCKET)s == INVALID_SOCKET) return false;
+			sockaddr_in addr{}; addr.sin_family = AF_INET; addr.sin_port = htons(port); addr.sin_addr.s_addr = inet_addr(ip.c_str());
+			if (connect(static_cast<SOCKET>(s), (sockaddr*)&addr, sizeof(addr)) != 0)
+			{
+				closesock(s);
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				continue;
+			}
+			std::ostringstream oss; oss << "HB|" << _nodeId << "|" << matchId << "|";
+			bool ok = tcpSendFramed(s, oss.str());
+			closesock(s);
+			if (ok) return true;
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		}
+		return false;
 	}
 
 	uint64_t LanP2PNode::nowMs()
@@ -759,34 +802,29 @@ namespace lanp2p
 
 	void LanP2PNode::peersMaintenanceLoop()
 	{
-// Periodically prune stale peers and manage match heartbeats
 		while (_running && _maintenanceActive)
 		{
 			const uint64_t now = nowMs();
-//1) prune discovery-based stale peers when not in match with them
 			if (_peerStaleMs >0)
 			{
 				std::lock_guard<std::mutex> lk(_peersMutex);
 				for (auto it = _peersByKey.begin(); it != _peersByKey.end(); )
 				{
-// If peer is in active match (has match state), skip UDP-based pruning here
 					if (_matchesByKey.find(it->first) != _matchesByKey.end())
 					{
-						++it;
-						continue;
+						++it; continue;
 					}
 					if ((now - it->second.lastSeenMs) > _peerStaleMs)
 					{
 						const PeerInfo& p = it->second;
 						std::printf("[LanP2PNode][DEBUG] 因超时移除 peer (DISC维护): id=%s ip=%s port=%u lastSeenMs=%llu nowMs=%llu staleMs=%llu\n",
-						            p.id.c_str(), p.ip.c_str(), (unsigned)p.tcpPort,
-						            (unsigned long long)p.lastSeenMs, (unsigned long long)now, (unsigned long long)_peerStaleMs);
+							            p.id.c_str(), p.ip.c_str(), (unsigned)p.tcpPort,
+							            (unsigned long long)p.lastSeenMs, (unsigned long long)now, (unsigned long long)_peerStaleMs);
 						it = _peersByKey.erase(it);
 					}
 					else ++it;
 				}
 			}
-//2) Create snapshot for heartbeats/timeouts
 			std::vector<std::tuple<std::string, std::string, uint16_t, std::string, uint64_t>> matchSnapshot;
 			{
 				std::lock_guard<std::mutex> lk(_peersMutex);
@@ -796,22 +834,14 @@ namespace lanp2p
 					size_t p1 = key.find(':');
 					size_t p2 = (p1==std::string::npos)?std::string::npos:key.find(':', p1+1);
 					std::string ip = (p1==std::string::npos)?std::string():key.substr(0,p1);
-					uint16_t port =0;
+					uint16_t port = 0;
 					if (p1!=std::string::npos && p2!=std::string::npos)
 					{
-						try
-						{
-							port = (uint16_t)std::stoi(key.substr(p1+1, p2-(p1+1)));
-						}
-						catch(...)
-						{
-							port=0;
-						}
+						try { port = (uint16_t)std::stoi(key.substr(p1+1, p2-(p1+1))); } catch (...) { port=0; }
 					}
 					matchSnapshot.emplace_back(key, ip, port, kv.second.matchId, kv.second.lastHbMs);
 				}
 			}
-//3) Act on snapshot without holding lock
 			for (auto& t : matchSnapshot)
 			{
 				const std::string& key = std::get<0>(t);
@@ -823,7 +853,6 @@ namespace lanp2p
 				if (_matchHeartbeatIntervalMs>0 && (now2 - last) >= _matchHeartbeatIntervalMs)
 				{
 					sendTcpHeartbeat(ip, port, matchId);
-// update last hb to now
 					std::lock_guard<std::mutex> lk(_peersMutex);
 					auto it = _matchesByKey.find(key);
 					if (it != _matchesByKey.end() && it->second.matchId == matchId)
@@ -831,21 +860,16 @@ namespace lanp2p
 				}
 				if (_matchHeartbeatTimeoutMs>0 && (now2 - last) > _matchHeartbeatTimeoutMs)
 				{
-// timeout -> clear match and consider peer offline (remove peer entry)
-					std::string peerId;
-					size_t p1 = key.find(':');
-					size_t p2 = (p1==std::string::npos)?std::string::npos:key.find(':', p1+1);
-					if (p2!=std::string::npos)
-						peerId = key.substr(p2+1);
+					std::string peerId; size_t p1 = key.find(':'); size_t p2 = (p1==std::string::npos)?std::string::npos:key.find(':', p1+1);
+					if (p2!=std::string::npos) peerId = key.substr(p2+1);
 					std::printf("[LanP2PNode][DEBUG] 因超时移除 peer (HB 超时): id=%s ip=%s port=%u matchId=%s lastHbMs=%llu nowMs=%llu timeoutMs=%llu\n",
 					            peerId.c_str(), ip.c_str(), (unsigned)port, matchId.c_str(),
 					            (unsigned long long)last, (unsigned long long)now2, (unsigned long long)_matchHeartbeatTimeoutMs);
 					clearMatch(ip, port, peerId, matchId, true);
 				}
 			}
-// sleep in small chunks to be responsive to stop
 			for (int i=0; i<10 && _running && _maintenanceActive; ++i)
-				std::this_thread::sleep_for(std::chrono::milliseconds(500)); // ~5s cadence
+				std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		}
 	}
 
@@ -865,7 +889,6 @@ namespace lanp2p
 		{
 			std::lock_guard<std::mutex> lk(_peersMutex);
 			_matchesByKey.erase(ip + ":" + std::to_string(tcpPort) + ":" + peerId);
-// Also remove peer record on timeout/interruption
 			for (auto it = _peersByKey.begin(); it != _peersByKey.end(); )
 			{
 				const PeerInfo& p = it->second;
@@ -876,11 +899,7 @@ namespace lanp2p
 		}
 		if (notify && _onMatchInterrupted)
 		{
-			PeerInfo pi;
-			pi.id = peerId;
-			pi.ip = ip;
-			pi.tcpPort = tcpPort;
-			pi.lastSeenMs = nowMs();
+			PeerInfo pi; pi.id = peerId; pi.ip = ip; pi.tcpPort = tcpPort; pi.lastSeenMs = nowMs();
 			_onMatchInterrupted(pi, matchId);
 		}
 	}

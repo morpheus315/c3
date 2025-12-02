@@ -86,6 +86,11 @@ namespace lanp2p
 			{
 				_matchHeartbeatTimeoutMs = ms;
 			}
+			void setMaxSendRetries(int r)
+			{
+				if (r > 0) _maxSendRetries = r;
+			}
+			int getMaxSendRetries() const { return _maxSendRetries; }
 
 			// Static utility function to generate a random match ID
 			static std::string generateMatchId();
@@ -154,5 +159,6 @@ namespace lanp2p
 			std::unordered_map<std::string, MatchState> _matchesByKey;
 			uint64_t _matchHeartbeatIntervalMs{2000}; //tcp心跳发送间隔
 			uint64_t _matchHeartbeatTimeoutMs{7000}; //tcp超时检测阈值
+			int _maxSendRetries{3}; // max TCP send/connect retry attempts
 	};
 }

@@ -20,30 +20,28 @@ Client::Client(lanp2p::LanP2PNode& node)
 // Destructor: Clean up resources
 Client::~Client()
 {
-    // Clear all callbacks early to prevent dangling pointer access
+    // Stop underlying node threads first to prevent new callbacks
+    _node.stop();
+
+    // Clear all callbacks early
     _node.setOnPeerDiscovered(nullptr);
     _node.setOnMatchRequest(nullptr);
     _node.setOnMatchResponse(nullptr);
     _node.setOnMatchInterrupted(nullptr);
     _node.setOnGameMove(nullptr);
 
-    // Stop game loop first if running
+    // Stop game loop if running
     _gameRunning = false;
-    
+
     // Stop timeout thread
     stopTimeoutThread();
-    
-    // End match if active
+
+    // End match if active (best-effort interrupt after node stopped is harmless)
     {
         std::lock_guard<std::mutex> lk(_matchMutex);
-        if (_match.inMatch)
-        {
-            // Don't call endMatch() here to avoid deadlock, just send interrupt
-            _node.interruptMatch(_match.peer.ip, _match.peer.tcpPort, _match.matchId);
-            _match = MatchState{};
-        }
+        _match = MatchState{};
     }
-    
+
     // Clean up game state
     cleanupGameState();
 }
