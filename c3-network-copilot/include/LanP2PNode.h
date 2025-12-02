@@ -40,41 +40,69 @@ namespace lanp2p
 			void stopUdpListen();
 
 			// 设置回调：发现对端/收到匹配请求/响应/中断/落子
-			void setOnPeerDiscovered(const std::function<void(const PeerInfo&)>& cb);
-			void setOnMatchRequest(const std::function<void(const PeerInfo&, const std::string& matchId)>& cb);
-			void setOnMatchResponse(const std::function<void(const PeerInfo&, bool accepted, const std::string& matchId)>& cb);
-			void setOnMatchInterrupted(const std::function<void(const PeerInfo&, const std::string& matchId)>& cb);
-			void setOnGameMove(const std::function<void(const PeerInfo&, int x, int y, int z)>& cb);
+			void setOnPeerDiscovered(const std::function<void(const PeerInfo &)> &cb);
+			void setOnMatchRequest(const std::function<void(const PeerInfo &, const std::string &matchId)> &cb);
+			void setOnMatchResponse(const std::function<void(const PeerInfo &, bool accepted, const std::string &matchId)> &cb);
+			void setOnMatchInterrupted(const std::function<void(const PeerInfo &, const std::string &matchId)> &cb);
+			void setOnGameMove(const std::function<void(const PeerInfo &, int x, int y, int z)> &cb);
 
 			// 业务操作：发起/响应/中断匹配；发送落子
-			bool sendMatchRequest(const std::string& peerIp, uint16_t peerTcpPort, const std::string& matchId);
-			bool respondToMatch(const std::string& peerIp, uint16_t peerTcpPort, const std::string& matchId, bool accept);
-			bool interruptMatch(const std::string& peerIp, uint16_t peerTcpPort, const std::string& matchId);
-			bool sendGameMove(const std::string& peerIp, uint16_t peerTcpPort, int x, int y, int z);
+			bool sendMatchRequest(const std::string &peerIp, uint16_t peerTcpPort, const std::string &matchId);
+			bool respondToMatch(const std::string &peerIp, uint16_t peerTcpPort, const std::string &matchId, bool accept);
+			bool interruptMatch(const std::string &peerIp, uint16_t peerTcpPort, const std::string &matchId);
+			bool sendGameMove(const std::string &peerIp, uint16_t peerTcpPort, int x, int y, int z);
 
 			// 获取当前可用对端的快照（会剔除超时的项）
 			std::vector<PeerInfo> getPeersSnapshot();
 
 			// 基本属性读取
-			std::string getNodeId() const { return _nodeId; }
-			uint16_t getTcpPort() const { return _tcpPort; }
-			uint16_t getDiscoveryPort() const { return _discoveryPort; }
+			std::string getNodeId() const
+			{
+				return _nodeId;
+			}
+			uint16_t getTcpPort() const
+			{
+				return _tcpPort;
+			}
+			uint16_t getDiscoveryPort() const
+			{
+				return _discoveryPort;
+			}
 
 			// 节点显示名设置/读取
-			void setNodeName(const std::string& name) { _nodeName = name; }
-			std::string getNodeName() const { return _nodeName; }
+			void setNodeName(const std::string &name)
+			{
+				_nodeName = name;
+			}
+			std::string getNodeName() const
+			{
+				return _nodeName;
+			}
 
 			// 超时/心跳相关参数设置
-			void setPeerStaleMs(uint64_t ms) { _peerStaleMs = ms; }
-			void setMatchHeartbeatIntervalMs(uint64_t ms) { _matchHeartbeatIntervalMs = ms; }
-			void setMatchHeartbeatTimeoutMs(uint64_t ms) { _matchHeartbeatTimeoutMs = ms; }
+			void setPeerStaleMs(uint64_t ms)
+			{
+				_peerStaleMs = ms;
+			}
+			void setMatchHeartbeatIntervalMs(uint64_t ms)
+			{
+				_matchHeartbeatIntervalMs = ms;
+			}
+			void setMatchHeartbeatTimeoutMs(uint64_t ms)
+			{
+				_matchHeartbeatTimeoutMs = ms;
+			}
 
 			// 发送失败最大重试次数设置与读取
 			void setMaxSendRetries(int r)
 			{
-				if (r > 0) _maxSendRetries = r;
+				if (r > 0)
+					_maxSendRetries = r;
 			}
-			int getMaxSendRetries() const { return _maxSendRetries; }
+			int getMaxSendRetries() const
+			{
+				return _maxSendRetries;
+			}
 
 			// 生成随机匹配ID（16位十六进制字符串）
 			static std::string generateMatchId();
@@ -88,20 +116,21 @@ namespace lanp2p
 			void peersMaintenanceLoop();
 
 			// TCP有帧边界的发送/接收（前置4字节网络序长度）
-			bool tcpSendFramed(uintptr_t sock, const std::string& payload);
-			bool tcpRecvFramed(uintptr_t sock, std::string& outPayload);
+			bool tcpSendFramed(uintptr_t sock, const std::string &payload);
+			bool tcpRecvFramed(uintptr_t sock, std::string &outPayload);
 
 			// 工具方法：时间戳与随机ID
 			static uint64_t nowMs();
 			static std::string randomId();
 
 			// 根据 ip+id 查找对端TCP端口（辅助解析回调参数）
-			uint16_t findPeerTcpPort(const std::string& ip, const std::string& id);
+			uint16_t findPeerTcpPort(const std::string &ip, const std::string &id);
 
 			// 对战状态管理：记录/清理匹配及其心跳
-			void markMatchActive(const std::string& ip, uint16_t tcpPort, const std::string& peerId, const std::string& matchId);
-			void clearMatch(const std::string& ip, uint16_t tcpPort, const std::string& peerId, const std::string& matchId, bool notify);
-			bool sendTcpHeartbeat(const std::string& ip, uint16_t port, const std::string& matchId);
+			void markMatchActive(const std::string &ip, uint16_t tcpPort, const std::string &peerId, const std::string &matchId);
+			void clearMatch(const std::string &ip, uint16_t tcpPort, const std::string &peerId, const std::string &matchId,
+			                bool notify);
+			bool sendTcpHeartbeat(const std::string &ip, uint16_t port, const std::string &matchId);
 
 		private:
 			// 端口与自身标识
@@ -125,11 +154,11 @@ namespace lanp2p
 			std::thread _maintenanceThread;
 
 			// 事件回调
-			std::function<void(const PeerInfo&)> _onPeerDiscovered;
-			std::function<void(const PeerInfo&, const std::string&)> _onMatchRequest;
-			std::function<void(const PeerInfo&, bool, const std::string&)> _onMatchResponse;
-			std::function<void(const PeerInfo&, const std::string&)> _onMatchInterrupted;
-			std::function<void(const PeerInfo&, int x, int y,int z)> _onGameMove;
+			std::function<void(const PeerInfo &)> _onPeerDiscovered;
+			std::function<void(const PeerInfo &, const std::string &)> _onMatchRequest;
+			std::function<void(const PeerInfo &, bool, const std::string &)> _onMatchResponse;
+			std::function<void(const PeerInfo &, const std::string &)> _onMatchInterrupted;
+			std::function<void(const PeerInfo &, int x, int y, int z)> _onGameMove;
 
 			// 对端与匹配状态
 			std::mutex _peersMutex;

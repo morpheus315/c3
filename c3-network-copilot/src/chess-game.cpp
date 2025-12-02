@@ -16,10 +16,10 @@ int place(int x, int y, int z, int BoardSize)
 	return (x - 1) + (y - 1) * BoardSize + (z - 1) * BoardSize * BoardSize;
 }
 
-bool OnlineInitChessBoard(char** pChessBoard, int BoardSize)
+bool OnlineInitChessBoard(char **pChessBoard, int BoardSize)
 {
 	size_t n = (size_t)BoardSize * (size_t)BoardSize * (size_t)BoardSize;
-	*pChessBoard = (char*)calloc(n, sizeof(char));
+	*pChessBoard = (char *)calloc(n, sizeof(char));
 	if (*pChessBoard == NULL)
 	{
 		cout << "ERROR allocating online chess board!" << endl;
@@ -48,10 +48,11 @@ void NativeGetChessPosition(int input[])
 
 
 //新函数：接受棋局描述，检查位置合法性，如果合法则更新棋局，否则输出非法标记
-bool UpdateBoardState(int BoardSize, char* ChessBoard, int input[], char player)
+bool UpdateBoardState(int BoardSize, char *ChessBoard, int input[], char player)
 {
 	// 检查坐标是否在棋盘范围内
-	if (input[0] < 1 || input[0] > BoardSize || input[1] < 1 || input[1] > BoardSize || input[2] < 1 || input[2] > BoardSize)
+	if (input[0] < 1 || input[0] > BoardSize || input[1] < 1 || input[1] > BoardSize || input[2] < 1
+	        || input[2] > BoardSize)
 	{
 		cout << "INVALID_MOVE: Position is out of the board range." << endl; // 输出非法标记
 		return false;
@@ -69,8 +70,9 @@ bool UpdateBoardState(int BoardSize, char* ChessBoard, int input[], char player)
 
 	// 位置合法，更新棋盘状态
 	ChessBoard[newChessIndex] = player;
-	cout << "MOVE_ACCEPTED: Board updated. Player " << player << " placed a piece at (" << input[0] << ", " << input[1] << ", " << input[2] << ")." << endl;
-	
+	cout << "MOVE_ACCEPTED: Board updated. Player " << player << " placed a piece at (" << input[0] << ", " << input[1] <<
+	     ", " << input[2] << ")." << endl;
+
 	// 在此可以调用一个函数来打印整个棋盘状态，如果需要的话。
 	// 例如: PrintBoard(BoardSize, ChessBoard);
 
@@ -78,7 +80,7 @@ bool UpdateBoardState(int BoardSize, char* ChessBoard, int input[], char player)
 }
 
 //以落子点为中心检测9*9*9的空间内是否有连着的5个棋子，有输出谁赢了以及怎么赢的并返回1，无返回0，各部分检测用花括号括起来以减少占用
-int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
+int CheckWin(int BoardSize, char *ChessBoard, int input[], char player)
 {
 	int x = input[0], y = input[1], z = input[2];
 	int xmax = (x + 4 <= BoardSize) ? (x + 4) : BoardSize;
@@ -91,10 +93,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int i = xmin; i + 4 <= xmax; i++)
 	{
 		if (*(ChessBoard + place(i, y, z, BoardSize)) == player &&
-			*(ChessBoard + place(i + 1, y, z, BoardSize)) == player &&
-			*(ChessBoard + place(i + 2, y, z, BoardSize)) == player &&
-			*(ChessBoard + place(i + 3, y, z, BoardSize)) == player &&
-			*(ChessBoard + place(i + 4, y, z, BoardSize)) == player)
+		        *(ChessBoard + place(i + 1, y, z, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 2, y, z, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 3, y, z, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 4, y, z, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the x-axis direction\n", player);
 			return 1;
@@ -104,10 +106,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int j = ymin; j + 4 <= ymax; j++)
 	{
 		if (*(ChessBoard + place(x, j, z, BoardSize)) == player &&
-			*(ChessBoard + place(x, j + 1, z, BoardSize)) == player &&
-			*(ChessBoard + place(x, j + 2, z, BoardSize)) == player &&
-			*(ChessBoard + place(x, j + 3, z, BoardSize)) == player &&
-			*(ChessBoard + place(x, j + 4, z, BoardSize)) == player)
+		        *(ChessBoard + place(x, j + 1, z, BoardSize)) == player &&
+		        *(ChessBoard + place(x, j + 2, z, BoardSize)) == player &&
+		        *(ChessBoard + place(x, j + 3, z, BoardSize)) == player &&
+		        *(ChessBoard + place(x, j + 4, z, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the y-axis direction\n", player);
 			return 1;
@@ -117,10 +119,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int k = zmin; k + 4 <= zmax; k++)
 	{
 		if (*(ChessBoard + place(x, y, k, BoardSize)) == player &&
-			*(ChessBoard + place(x, y, k + 1, BoardSize)) == player &&
-			*(ChessBoard + place(x, y, k + 2, BoardSize)) == player &&
-			*(ChessBoard + place(x, y, k + 3, BoardSize)) == player &&
-			*(ChessBoard + place(x, y, k + 4, BoardSize)) == player)
+		        *(ChessBoard + place(x, y, k + 1, BoardSize)) == player &&
+		        *(ChessBoard + place(x, y, k + 2, BoardSize)) == player &&
+		        *(ChessBoard + place(x, y, k + 3, BoardSize)) == player &&
+		        *(ChessBoard + place(x, y, k + 4, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the z-axis direction\n", player);
 			return 1;
@@ -130,10 +132,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int i = xmin, j = ymin; i + 4 <= xmax && j + 4 <= ymax; i++, j++)
 	{
 		if (*(ChessBoard + place(i, j, z, BoardSize)) == player &&
-			*(ChessBoard + place(i + 1, j + 1, z, BoardSize)) == player &&
-			*(ChessBoard + place(i + 2, j + 2, z, BoardSize)) == player &&
-			*(ChessBoard + place(i + 3, j + 3, z, BoardSize)) == player &&
-			*(ChessBoard + place(i + 4, j + 4, z, BoardSize)) == player)
+		        *(ChessBoard + place(i + 1, j + 1, z, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 2, j + 2, z, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 3, j + 3, z, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 4, j + 4, z, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the xy-diagonal direction\n", player);
 			return 1;
@@ -142,10 +144,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int i = xmax, j = ymin; i - 4 >= xmin && j + 4 <= ymax; i--, j++)
 	{
 		if (*(ChessBoard + place(i, j, z, BoardSize)) == player &&
-			*(ChessBoard + place(i - 1, j + 1, z, BoardSize)) == player &&
-			*(ChessBoard + place(i - 2, j + 2, z, BoardSize)) == player &&
-			*(ChessBoard + place(i - 3, j + 3, z, BoardSize)) == player &&
-			*(ChessBoard + place(i - 4, j + 4, z, BoardSize)) == player)
+		        *(ChessBoard + place(i - 1, j + 1, z, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 2, j + 2, z, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 3, j + 3, z, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 4, j + 4, z, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the xy-diagonal direction\n", player);
 			return 1;
@@ -155,10 +157,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int j = ymin, k = zmin; j + 4 <= ymax && k + 4 <= zmax; j++, k++)
 	{
 		if (*(ChessBoard + place(x, j, k, BoardSize)) == player &&
-			*(ChessBoard + place(x, j + 1, k + 1, BoardSize)) == player &&
-			*(ChessBoard + place(x, j + 2, k + 2, BoardSize)) == player &&
-			*(ChessBoard + place(x, j + 3, k + 3, BoardSize)) == player &&
-			*(ChessBoard + place(x, j + 4, k + 4, BoardSize)) == player)
+		        *(ChessBoard + place(x, j + 1, k + 1, BoardSize)) == player &&
+		        *(ChessBoard + place(x, j + 2, k + 2, BoardSize)) == player &&
+		        *(ChessBoard + place(x, j + 3, k + 3, BoardSize)) == player &&
+		        *(ChessBoard + place(x, j + 4, k + 4, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the yz-diagonal direction\n", player);
 			return 1;
@@ -167,10 +169,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int j = ymax, k = zmin; j - 4 >= ymin && k + 4 <= zmax; j--, k++)
 	{
 		if (*(ChessBoard + place(x, j, k, BoardSize)) == player &&
-			*(ChessBoard + place(x, j - 1, k + 1, BoardSize)) == player &&
-			*(ChessBoard + place(x, j - 2, k + 2, BoardSize)) == player &&
-			*(ChessBoard + place(x, j - 3, k + 3, BoardSize)) == player &&
-			*(ChessBoard + place(x, j - 4, k + 4, BoardSize)) == player)
+		        *(ChessBoard + place(x, j - 1, k + 1, BoardSize)) == player &&
+		        *(ChessBoard + place(x, j - 2, k + 2, BoardSize)) == player &&
+		        *(ChessBoard + place(x, j - 3, k + 3, BoardSize)) == player &&
+		        *(ChessBoard + place(x, j - 4, k + 4, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the yz-diagonal direction\n", player);
 			return 1;
@@ -180,10 +182,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int i = xmin, k = zmin; i + 4 <= xmax && k + 4 <= zmax; i++, k++)
 	{
 		if (*(ChessBoard + place(i, y, k, BoardSize)) == player &&
-			*(ChessBoard + place(i + 1, y, k + 1, BoardSize)) == player &&
-			*(ChessBoard + place(i + 2, y, k + 2, BoardSize)) == player &&
-			*(ChessBoard + place(i + 3, y, k + 3, BoardSize)) == player &&
-			*(ChessBoard + place(i + 4, y, k + 4, BoardSize)) == player)
+		        *(ChessBoard + place(i + 1, y, k + 1, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 2, y, k + 2, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 3, y, k + 3, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 4, y, k + 4, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the xz-diagonal direction\n", player);
 			return 1;
@@ -192,10 +194,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int i = xmax, k = zmin; i - 4 >= xmin && k + 4 <= zmax; i--, k++)
 	{
 		if (*(ChessBoard + place(i, y, k, BoardSize)) == player &&
-			*(ChessBoard + place(i - 1, y, k + 1, BoardSize)) == player &&
-			*(ChessBoard + place(i - 2, y, k + 2, BoardSize)) == player &&
-			*(ChessBoard + place(i - 3, y, k + 3, BoardSize)) == player &&
-			*(ChessBoard + place(i - 4, y, k + 4, BoardSize)) == player)
+		        *(ChessBoard + place(i - 1, y, k + 1, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 2, y, k + 2, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 3, y, k + 3, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 4, y, k + 4, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the xz-diagonal direction\n", player);
 			return 1;
@@ -205,10 +207,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int i = xmin, j = ymin, k = zmin; i + 4 <= xmax && j + 4 <= ymax && k + 4 <= zmax; i++, j++, k++)
 	{
 		if (*(ChessBoard + place(i, j, k, BoardSize)) == player &&
-			*(ChessBoard + place(i + 1, j + 1, k + 1, BoardSize)) == player &&
-			*(ChessBoard + place(i + 2, j + 2, k + 2, BoardSize)) == player &&
-			*(ChessBoard + place(i + 3, j + 3, k + 3, BoardSize)) == player &&
-			*(ChessBoard + place(i + 4, j + 4, k + 4, BoardSize)) == player)
+		        *(ChessBoard + place(i + 1, j + 1, k + 1, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 2, j + 2, k + 2, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 3, j + 3, k + 3, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 4, j + 4, k + 4, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the space-diagonal direction\n", player);
 			return 1;
@@ -217,10 +219,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int i = xmax, j = ymin, k = zmin; i - 4 >= xmin && j + 4 <= ymax && k + 4 <= zmax; i--, j++, k++)
 	{
 		if (*(ChessBoard + place(i, j, k, BoardSize)) == player &&
-			*(ChessBoard + place(i - 1, j + 1, k + 1, BoardSize)) == player &&
-			*(ChessBoard + place(i - 2, j + 2, k + 2, BoardSize)) == player &&
-			*(ChessBoard + place(i - 3, j + 3, k + 3, BoardSize)) == player &&
-			*(ChessBoard + place(i - 4, j + 4, k + 4, BoardSize)) == player)
+		        *(ChessBoard + place(i - 1, j + 1, k + 1, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 2, j + 2, k + 2, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 3, j + 3, k + 3, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 4, j + 4, k + 4, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the space-diagonal direction\n", player);
 			return 1;
@@ -229,10 +231,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int i = xmin, j = ymax, k = zmin; i + 4 <= xmax && j - 4 >= ymin && k + 4 <= zmax; i++, j--, k++)
 	{
 		if (*(ChessBoard + place(i, j, k, BoardSize)) == player &&
-			*(ChessBoard + place(i + 1, j - 1, k + 1, BoardSize)) == player &&
-			*(ChessBoard + place(i + 2, j - 2, k + 2, BoardSize)) == player &&
-			*(ChessBoard + place(i + 3, j - 3, k + 3, BoardSize)) == player &&
-			*(ChessBoard + place(i + 4, j - 4, k + 4, BoardSize)) == player)
+		        *(ChessBoard + place(i + 1, j - 1, k + 1, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 2, j - 2, k + 2, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 3, j - 3, k + 3, BoardSize)) == player &&
+		        *(ChessBoard + place(i + 4, j - 4, k + 4, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the space-diagonal direction\n", player);
 			return 1;
@@ -241,10 +243,10 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	for (int i = xmax, j = ymax, k = zmin; i - 4 >= xmin && j - 4 >= ymin && k + 4 <= zmax; i--, j--, k++)
 	{
 		if (*(ChessBoard + place(i, j, k, BoardSize)) == player &&
-			*(ChessBoard + place(i - 1, j - 1, k + 1, BoardSize)) == player &&
-			*(ChessBoard + place(i - 2, j - 2, k + 2, BoardSize)) == player &&
-			*(ChessBoard + place(i - 3, j - 3, k + 3, BoardSize)) == player &&
-			*(ChessBoard + place(i - 4, j - 4, k + 4, BoardSize)) == player)
+		        *(ChessBoard + place(i - 1, j - 1, k + 1, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 2, j - 2, k + 2, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 3, j - 3, k + 3, BoardSize)) == player &&
+		        *(ChessBoard + place(i - 4, j - 4, k + 4, BoardSize)) == player)
 		{
 			printf("The player%c wins! In the space-diagonal direction\n", player);
 			return 1;
@@ -253,6 +255,7 @@ int CheckWin(int BoardSize, char* ChessBoard,int input[],char player)
 	return 0;
 }
 /*
+
 //单机游戏主程序
 int NativeChessPlaying(int BoardSize, char* ChessBoard)
 {
