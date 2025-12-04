@@ -57,10 +57,10 @@ namespace lanp2p
 		_broadcastActive.store(true);
 		_udpListenActive.store(true);
 		_tcpActive.store(true);
-		if (!_maintenanceActive.exchange(true))
+		if (!_maintenanceActive.exchange(true)
+		    && !_maintenanceThread.joinable())
 		{
-			if (!_maintenanceThread.joinable())
-				_maintenanceThread = std::thread(&LanP2PNode::peersMaintenanceLoop, this);
+			_maintenanceThread = std::thread(&LanP2PNode::peersMaintenanceLoop, this);
 		}
 		_udpBroadcaster = std::thread(&LanP2PNode::udpBroadcastLoop, this);
 		_udpListener = std::thread(&LanP2PNode::udpListenLoop, this);
@@ -74,20 +74,20 @@ namespace lanp2p
 		{
 			// 首次进入运行状态时可在此做额外初始化
 		}
-		if (!_broadcastActive.exchange(true))
+		if (!_broadcastActive.exchange(true)
+		    && !_udpBroadcaster.joinable())
 		{
-			if (!_udpBroadcaster.joinable())
-				_udpBroadcaster = std::thread(&LanP2PNode::udpBroadcastLoop, this);
+			_udpBroadcaster = std::thread(&LanP2PNode::udpBroadcastLoop, this);
 		}
-		if (!_tcpActive.exchange(true))
+		if (!_tcpActive.exchange(true)
+		    && !_tcpListener.joinable())
 		{
-			if (!_tcpListener.joinable())
-				_tcpListener = std::thread(&LanP2PNode::tcpListenLoop, this);
+			_tcpListener = std::thread(&LanP2PNode::tcpListenLoop, this);
 		}
-		if (!_maintenanceActive.exchange(true))
+		if (!_maintenanceActive.exchange(true)
+		    && !_maintenanceThread.joinable())
 		{
-			if (!_maintenanceThread.joinable())
-				_maintenanceThread = std::thread(&LanP2PNode::peersMaintenanceLoop, this);
+			_maintenanceThread = std::thread(&LanP2PNode::peersMaintenanceLoop, this);
 		}
 	}
 
@@ -96,15 +96,15 @@ namespace lanp2p
 	{
 		if (!_running)
 			_running = true;
-		if (!_udpListenActive.exchange(true))
+		if (!_udpListenActive.exchange(true)
+		    && !_udpListener.joinable())
 		{
-			if (!_udpListener.joinable())
-				_udpListener = std::thread(&LanP2PNode::udpListenLoop, this);
+			_udpListener = std::thread(&LanP2PNode::udpListenLoop, this);
 		}
-		if (!_maintenanceActive.exchange(true))
+		if (!_maintenanceActive.exchange(true)
+		    && !_maintenanceThread.joinable())
 		{
-			if (!_maintenanceThread.joinable())
-				_maintenanceThread = std::thread(&LanP2PNode::peersMaintenanceLoop, this);
+			_maintenanceThread = std::thread(&LanP2PNode::peersMaintenanceLoop, this);
 		}
 	}
 
@@ -676,28 +676,17 @@ namespace lanp2p
 	}
 
 	// TCP有边界帧接收
-	bool LanP2PNode::tcpRecvFramed(uintptr_t sock, std::string &outPayload)
+	bool LanP2PNode::tcpRecvFramed(uintptr_t sock, std::string& outPayload)
 	{
-		uint32_t be = 0;
-		int got = 0;
-		int r = 0;
-		while (got < 4)
-		{
-			r = recv(static_cast<SOCKET>(sock), ((char *)&be) + got, 4 - got, 0);
-			if (r <= 0)
-				return false;
-			got += r;
-		}
+		uint32_t be =0; int got =0; int r =0;
+		while (got <4) { r = recv(static_cast<SOCKET>(sock), ((char*)&be) + got,4 - got,0); if (r <=0) return false; got += r; }
 		uint32_t n = ntohl(be);
+		// 限制最大帧长度，防止恶意端发送超大帧
+		const uint32_t MAX_FRAME_SIZE = 8192;
+		if (n > MAX_FRAME_SIZE) return false;
 		outPayload.resize(n);
-		int off = 0;
-		while (off < (int)n)
-		{
-			r = recv(static_cast<SOCKET>(sock), &outPayload[off], (int)n - off, 0);
-			if (r <= 0)
-				return false;
-			off += r;
-		}
+		int off =0;
+		while (off < (int)n) { r = recv(static_cast<SOCKET>(sock), &outPayload[off], (int)n - off,0); if (r <=0) return false; off += r; }
 		return true;
 	}
 

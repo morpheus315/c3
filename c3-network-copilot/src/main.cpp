@@ -3,6 +3,32 @@
 #include <iostream>
 #include <string>
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+// 全局指针，用于控制台关闭事件处理
+static Client* g_client = nullptr;
+static lanp2p::LanP2PNode* g_node = nullptr;
+
+// 控制台关闭事件处理
+static BOOL WINAPI ConsoleCtrlHandler(DWORD ctrlType)
+{
+	if (ctrlType == CTRL_CLOSE_EVENT || ctrlType == CTRL_C_EVENT || ctrlType == CTRL_BREAK_EVENT)
+	{
+		// 在进程终止前发送中断消息
+		if (g_client && g_client->isInMatch())
+		{
+			g_client->endMatch();
+		}
+		if (g_node)
+		{
+			g_node->stop();
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
 // 简易控制台菜单
 static void printMenu()
 {
@@ -28,6 +54,11 @@ int main()
 
 	// 创建客户端，负责回调接入与游戏流程
 	Client client(node);
+
+	// 设置全局指针并注册控制台关闭事件处理
+	g_node = &node;
+	g_client = &client;
+	SetConsoleCtrlHandler(ConsoleCtrlHandler, TRUE);
 
 	// 设置显示名
 	std::cout << "请输入你的显示名（可留空）: ";
@@ -142,7 +173,5 @@ int main()
 		}
 	}
 
-	// 退出时停止节点
-	node.stop();
 	return 0;
 }

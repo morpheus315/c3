@@ -1,9 +1,5 @@
-#define NOMINMAX
-#include <windows.h>
 #include <cstdio>
 #include <iostream>
-#include <cmath>
-#include <tchar.h>
 #include <limits>
 #include "../include/chess-game.h"
 //棋盘位置逻辑：右手系xyz，先沿x再沿y再沿z，比如BoardSize=5，那*(ChessBoard+17)对应的棋子位置就是（2，4，1），计算公式：17=（2-1）+（4-1）* 5 +（1-1）* 25
@@ -32,7 +28,7 @@ bool OnlineInitChessBoard(char **pChessBoard, int BoardSize)
 void NativeGetChessPosition(int input[])
 {
 	cout << "Enter the location where you want to place your order. Use the form like x y z." << endl;
-	while (TRUE)
+	while (true)
 	{
 		if (!(cin >> input[0] >> input[1] >> input[2]))
 		{

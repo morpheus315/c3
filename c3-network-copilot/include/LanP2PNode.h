@@ -104,6 +104,9 @@ namespace lanp2p
 				return _maxSendRetries;
 			}
 
+			// 在匹配表中标记对战活跃（用于心跳检测）
+			void markMatchActive(const std::string &ip, uint16_t tcpPort, const std::string &peerId, const std::string &matchId);
+
 			// 生成随机匹配ID（16位十六进制字符串）
 			static std::string generateMatchId();
 
@@ -127,7 +130,6 @@ namespace lanp2p
 			uint16_t findPeerTcpPort(const std::string &ip, const std::string &id);
 
 			// 对战状态管理：记录/清理匹配及其心跳
-			void markMatchActive(const std::string &ip, uint16_t tcpPort, const std::string &peerId, const std::string &matchId);
 			void clearMatch(const std::string &ip, uint16_t tcpPort, const std::string &peerId, const std::string &matchId,
 			                bool notify);
 			bool sendTcpHeartbeat(const std::string &ip, uint16_t port, const std::string &matchId);
